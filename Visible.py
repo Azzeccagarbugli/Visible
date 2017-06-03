@@ -33,15 +33,18 @@ else:
     cap = cv2.VideoCapture(args["video"])   # Seleziono il video
 
 # Inizializzo le finestre che utilizzerò
-cv2.namedWindow("Visible")
-cv2.moveWindow("Visible", 300, 200)
+cv2.namedWindow("Visible", cv2.WINDOW_NORMAL)
+cv2.resizeWindow("Visible", 1024, 768)
+cv2.moveWindow("Visible", 100, 200)
 cv2.namedWindow("Visible - HSV (22)")
-cv2.moveWindow("Visible - HSV (22)", 1000, 200)
+cv2.moveWindow("Visible - HSV (22)", 1200, 200)
+cv2.namedWindow("Visible - Black (22)")
+cv2.moveWindow("Visible - Black (22)", 1200, 500)
 
 #Indico che ogni evento causato dal mouse sarà gestito dalla funzione SelectROI
 cv2.setMouseCallback("Visible", SelectROI)
 
-# Preparo i criteri di terminazione, il Camshift farà 10 iterazioni o si muoverà al massimo di 1 pt
+# Preparo i criteri di terminazione, il Camshift farà X iterazioni o si muoverà al massimo di 1 pt
 term_crit = ( cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1 )
 roiBox = None
 
@@ -70,12 +73,14 @@ while(1):
         pts = np.int0(pts)
         cv2.polylines(frame,[pts],True, 255,2)
 
-    # Aggiorno le due finestre
+    # Aggiorno le tre finestre
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    black = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     cv2.imshow("Visible", frame)
     cv2.imshow("Visible - HSV (22)", hsv)
+    cv2.imshow("Visible - Black (22)", black)
 
-    key = cv2.waitKey(1) & 0xFF
+    key = cv2.waitKey(22) & 0xFF
     if key == ord("i") and len(roiPts) < 4:
         # Sono entrato nella INPUTMODE. A questo punto clono il frame per poter
         # selezionare comodamente la roiBOX
@@ -100,7 +105,7 @@ while(1):
 
         # Mi calcolo l'istogramma per l'istogramma HSV e restituisco la roiBOX finale
         mask = cv2.inRange(roi, np.array((0., 60.,32.)), np.array((180.,255.,255.)))
-        roi_hist = cv2.calcHist([roi], [0], mask, [180], [0, 180])
+        roi_hist = cv2.calcHist([roi], [0], mask, [16], [0, 180])
         roi_hist = cv2.normalize(roi_hist, roi_hist, 0, 255, cv2.NORM_MINMAX)
         roiBox = (tl[0], tl[1], br[0], br[1])
 
