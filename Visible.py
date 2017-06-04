@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import argparse
 import numpy as np
 import cv2
@@ -6,6 +5,10 @@ import cv2
 frame = None
 roiPts = []
 inputMode = False
+
+# Funzione per la gestione della Trackbar
+def nothing(x):
+    pass
 
 # Una funzione callback che ci permetterà di acquisire 4 punti ROI dal mouse
 def SelectROI(event, x, y, flags, param):
@@ -33,21 +36,21 @@ else:
     cap = cv2.VideoCapture(args["video"])   # Seleziono il video
 
 # Inizializzo le finestre che utilizzerò
-cv2.namedWindow("Visible", cv2.WINDOW_NORMAL)
-cv2.resizeWindow("Visible", 1024, 768)
+cv2.namedWindow("Visible")
 cv2.moveWindow("Visible", 100, 200)
-cv2.namedWindow("Visible - HSV")
-cv2.moveWindow("Visible - HSV", 1200, 200)
-cv2.resizeWindow("Visible - HSV", 320, 240)
-cv2.namedWindow("Visible - Black")
-cv2.moveWindow("Visible - Black", 1200, 500)
-cv2.resizeWindow("Visible - Black", 320, 240)
+cv2.namedWindow("Visible - HSV (22)")
+cv2.moveWindow("Visible - HSV (22)", 800, 25)
+cv2.namedWindow("Visible - BackProj")
+cv2.moveWindow("Visible - BackProj", 800, 550)
 
+# Creazione Trackbars
+cv2.createTrackbar('MIN','Visible', 4, 254, nothing)
+cv2.createTrackbar('MAX','Visible', 180, 254, nothing)
 
 #Indico che ogni evento causato dal mouse sarà gestito dalla funzione SelectROI
 cv2.setMouseCallback("Visible", SelectROI)
 
-# Preparo i criteri di terminazione, il Camshift farà X iterazioni o si muoverà al massimo di 1 pt
+# Preparo i criteri di terminazione, il Camshift farà 10 iterazioni o si muoverà al massimo di 1 pt
 term_crit = ( cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1 )
 roiBox = None
 
@@ -62,11 +65,16 @@ while(1):
     if not grabbed:
         break
 
+    # Richiamo TrackBar
+    MIN = cv2.getTrackbarPos('MIN','Visible')
+    MAX = cv2.getTrackbarPos('MAX','Visible')
+
     # Controllo se non ho già una roiBOX pronta
     if roiBox is not None:
         # Converto il frame dal range di colore RGB a quello HSV
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        dst = cv2.calcBackProject([hsv],[0],roi_hist,[0,180],1)
+        dst = cv2.calcBackProject([hsv],[0],roi_hist,[MIN,MAX+1],1)
+        cv2.imshow("Visible - BackProj", dst)
 
         # Applico l'algoritmo CamShift ai punti dati, basandoci sulla roiBOX ottenuta in INPUTMODE
         ret, roiBox = cv2.CamShift(dst, roiBox, term_crit)
@@ -76,14 +84,12 @@ while(1):
         pts = np.int0(pts)
         cv2.polylines(frame,[pts],True, 255,2)
 
-    # Aggiorno le tre finestre
+    # Aggiorno le due finestre
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    black = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     cv2.imshow("Visible", frame)
-    cv2.imshow("Visible - HSV", hsv)
-    cv2.imshow("Visible - Black", black)
+    cv2.imshow("Visible - HSV (22)", hsv)
 
-    key = cv2.waitKey(22) & 0xFF
+    key = cv2.waitKey(1) & 0xFF
     if key == ord("i") and len(roiPts) < 4:
         # Sono entrato nella INPUTMODE. A questo punto clono il frame per poter
         # selezionare comodamente la roiBOX
@@ -105,12 +111,13 @@ while(1):
         # Ho finalmente la roi finalizzata e la converto in HSV
         roi = orig[tl[1]:br[1], tl[0]:br[0]]
         roi = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
+
         # Salvo l'immagine selezionata in HSV e la trasformo in .png
-        cv2.imwrite("slezioneHSV.png", roi)
+        cv2.imwrite("selezioneHSV.png", roi)
 
         # Mi calcolo l'istogramma per l'istogramma HSV e restituisco la roiBOX finale
         mask = cv2.inRange(roi, np.array((0., 60.,32.)), np.array((180.,255.,255.)))
-        roi_hist = cv2.calcHist([roi], [0], mask, [16], [0, 180])
+        roi_hist = cv2.calcHist([roi], [0], mask, [180], [0, 180])
         roi_hist = cv2.normalize(roi_hist, roi_hist, 0, 255, cv2.NORM_MINMAX)
         roiBox = (tl[0], tl[1], br[0], br[1])
 
