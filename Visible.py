@@ -105,6 +105,8 @@ while(1):
         # Ho finalmente la roi finalizzata e la converto in HSV
         roi = orig[tl[1]:br[1], tl[0]:br[0]]
         roi = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
+        # Salvo l'immagine selezionata in HSV e la trasformo in .png
+        cv2.imwrite("slezioneHSV.png", roi)
 
         # Mi calcolo l'istogramma per l'istogramma HSV e restituisco la roiBOX finale
         mask = cv2.inRange(roi, np.array((0., 60.,32.)), np.array((180.,255.,255.)))
