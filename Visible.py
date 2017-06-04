@@ -36,10 +36,13 @@ else:
 cv2.namedWindow("Visible", cv2.WINDOW_NORMAL)
 cv2.resizeWindow("Visible", 1024, 768)
 cv2.moveWindow("Visible", 100, 200)
-cv2.namedWindow("Visible - HSV (22)")
-cv2.moveWindow("Visible - HSV (22)", 1200, 200)
-cv2.namedWindow("Visible - Black (22)")
-cv2.moveWindow("Visible - Black (22)", 1200, 500)
+cv2.namedWindow("Visible - HSV")
+cv2.moveWindow("Visible - HSV", 1200, 200)
+cv2.resizeWindow("Visible - HSV", 320, 240)
+cv2.namedWindow("Visible - Black")
+cv2.moveWindow("Visible - Black", 1200, 500)
+cv2.resizeWindow("Visible - Black", 320, 240)
+
 
 #Indico che ogni evento causato dal mouse sarà gestito dalla funzione SelectROI
 cv2.setMouseCallback("Visible", SelectROI)
@@ -77,8 +80,8 @@ while(1):
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     black = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     cv2.imshow("Visible", frame)
-    cv2.imshow("Visible - HSV (22)", hsv)
-    cv2.imshow("Visible - Black (22)", black)
+    cv2.imshow("Visible - HSV", hsv)
+    cv2.imshow("Visible - Black", black)
 
     key = cv2.waitKey(22) & 0xFF
     if key == ord("i") and len(roiPts) < 4:
